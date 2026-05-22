@@ -6,10 +6,10 @@ import torch
 
 class Self_Attn_Spatial(nn.Module):
     """
-    func: Self attention Spatial Layer 自注意力机制.通过类似Transformer中的Q K V来实现
+    func: Self attention Spatial Layer 
     inputs:
-        in_dim: 输入的通道数
-        out_dim: 在进行self attention时生成Q,K矩阵的列数, 一般默认为in_dim//8
+        in_dim: 
+        out_dim: 
     """
 
     def __init__(self, in_dim, out_dim):
@@ -34,25 +34,23 @@ class Self_Attn_Spatial(nn.Module):
         """
         m_batchsize, C, length = x.size()
 
-        # proj_query中的第i行表示第i个像素位置上所有通道的值。size = B X N × C1
+        
         proj_query = self.query_conv(x).view(m_batchsize, -1, length).permute(0, 2, 1)
 
-        # proj_key中的第j行表示第j个像素位置上所有通道的值，size = B X C1 x N
+        
         proj_key = self.key_conv(x).view(m_batchsize, -1, length)
 
-        # Energy中的第(i,j)是将proj_query中的第i行与proj_key中的第j行点乘得到
-        # energy中第(i,j)位置的元素是指输入特征图第j个元素对第i个元素的影响，
-        # 从而实现全局上下文任意两个元素的依赖关系
+        
         energy = torch.bmm(proj_query, proj_key)  # transpose check
 
-        # 对行的归一化，对于(i,j)位置即可理解为第j位置对i位置的权重，所有的j对i位置的权重之和为1
+        
         attention = self.softmax(energy)  # B X N X N
 
         proj_value = self.value_conv(x).view(m_batchsize, -1, length)  # B X C X N
         out = torch.bmm(proj_value, attention.permute(0, 2, 1))  # B X C X N
         out = out.view(m_batchsize, C,length)  # B X C X W X H
 
-        # 跨连，Gamma是需要学习的参数
+        
         out = self.gamma * out + x  # B X C X W X H
 
         # return out, attention
